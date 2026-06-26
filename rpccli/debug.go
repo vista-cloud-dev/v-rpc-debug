@@ -22,6 +22,7 @@ type debugCmd struct {
 	Status  statusCmd  `cmd:"" help:"Show the current XWBDEBUG level and active log jobs."`
 	Arm     armCmd     `cmd:"" help:"Turn XWBDEBUG capture on (set the broker debug level)."`
 	Disarm  disarmCmd  `cmd:"" help:"Turn XWBDEBUG capture off (restore the debug level)."`
+	Ping    pingCmd    `cmd:"" help:"Fire test RPCs at a broker so a tap has traffic to capture."`
 }
 
 // --- shared capture options + loop ------------------------------------------

@@ -113,6 +113,30 @@ Each line looks like:
 By default it also echoes the captured RPCs to stderr so you can watch progress;
 pass `--quiet` to suppress that.
 
+### `ping` — fire test RPCs (drive traffic)
+
+Sends harmless no-arg RPCs straight to the broker's TCP port so a running `tail`
+or `capture` has something to capture — no external client (or CPRS) needed. The
+broker logs each `RPC: <name>` then rejects it (no session); that's exactly what
+we want to see in the tap.
+
+```bash
+v-rpc debug ping --addr 127.0.0.1:9430
+#   sent XWB IM HERE               (broker replied 52 bytes)
+#   sent XUS INTRO MSG             (broker replied 52 bytes)
+#   sent XWB GET VARIABLE VALUE    (broker replied 52 bytes)
+# 3/3 RPC(s) sent to 127.0.0.1:9430
+```
+
+`ping` takes a broker `--addr` (host:port — vehu is `127.0.0.1:9430`), **not** the
+engine flags: unlike the other verbs it connects as an RPC *client* over the
+broker wire protocol, it does not reach the M engine. Flags: `--rpc NAME`
+(repeatable; default a small set), `--count N` (send the set N times),
+`--timeout` (per-connection).
+
+> If `XWBDEBUG` is **off**, a ping writes nothing (the broker's logger quits
+> immediately) — so pinging is safe even when you're not capturing.
+
 ### `arm` / `disarm` — explicit control
 
 `tail` and `capture` arm and restore automatically, so you usually don't need
@@ -154,6 +178,31 @@ v-rpc debug tail --engine ydb --container vehu -o json | jq -r .rpc
 - **Level 3** logs the full call string **including RPC parameters**, which on a
   real VistA is **PHI**, written in cleartext to `^XTMP`. Only use `--level 3` on
   a test system with no real patient data, and clear the log afterward.
+
+## 4a. Self-contained validation (no external client)
+
+Prove capture end-to-end with `v rpc` alone — `tail` in one terminal, `ping` in
+another:
+
+```bash
+# terminal 1 — watch
+v-rpc debug tail --engine ydb --transport docker --container vehu
+
+# terminal 2 — drive traffic
+v-rpc debug ping --addr 127.0.0.1:9430
+```
+
+Or in a single terminal, bounded, saving to a file — start the capture, then ping
+once it's armed:
+
+```bash
+v-rpc debug capture --engine ydb --transport docker --container vehu \
+  --out rpc.ldjson --duration 8s --all          # arms, captures for 8s, restores
+# ...within those 8 seconds, from another shell:
+v-rpc debug ping --addr 127.0.0.1:9430
+cat rpc.ldjson                                    # the captured RPC: lines, as LDJSON
+v-rpc debug status --engine ydb --transport docker --container vehu  # confirm level back to 1
+```
 
 ## 5. Comparing against the VSL tap
 

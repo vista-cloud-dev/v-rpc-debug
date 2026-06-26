@@ -13,7 +13,9 @@ engine driver seam to **view live RPC traffic in the terminal** or **save it to 
 file as LDJSON** for **offline comparison against the Phase-2 VSL tap** — a
 debug/validation tool, NOT a durable egress tap (that's the VSL hook).
 
-**Locked design (with owner):** `v rpc debug {tail,capture,status,arm,disarm}`;
+**Locked design (with owner):** `v rpc debug {tail,capture,status,arm,disarm,ping}`
+(`ping` fires no-arg [XWB] RPCs at a broker to self-test capture — RPC-client role,
+takes `--addr`, not the engine seam);
 shared flags `--all/--filter/--interval/--duration/--level{2,3}/--keep/--no-clear`;
 explicit `--engine ydb|iris` (ydb/vehu now, IRIS-VistA for VA validation later);
 capture LDJSON field names align with the s3tap envelope (`rpc`,`ts`,`job`,`seq`)
@@ -40,6 +42,8 @@ v-pkg/go-cli-template.
    owner's step per org convention).
 2. Run the live `arm`/`capture`/`tail` streaming validation (state-changing engine
    ops — held back this session); confirm restore-on-exit leaves `XWBDEBUG=1`.
+   Traffic is now driven by `v rpc debug ping --addr 127.0.0.1:9430` (Go [XWB]
+   wire client, `internal/xwbwire`) — self-contained, no python/CPRS needed.
 3. **I5 (deferred): mount into v-cli** — add `vcontract.Contract()` to `rpccli`
    (mirror pkgcli/contract.go), then in v-cli add `Rpc rpccli.Commands` +
    `rpccli.Contract()` to the registry. Needs v-rpc published + tagged (v-cli pins

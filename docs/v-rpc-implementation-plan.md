@@ -41,6 +41,7 @@ and the `cprs-rpc-xwbdebug-host-probe` memory.
 ## Architecture (waterline-clean)
 
 - `internal/xwblog` — **pure** parse/record/LDJSON/dedup. No engine dep. ✅ done
+- `internal/xwbwire` — **pure** [XWB] broker wire-message encoder (for `ping`). ✅ done
 - `internal/capture` — arm/disarm + poll-read + dedup + render/emit, over a small
   `Execer` interface (fake-tested; the real impl wraps `mdriver.Client.ExecEval`).
 - `rpccli` — clikit command structs (`Commands`, `debugCmd` + subcommands),
@@ -56,7 +57,9 @@ and the `cprs-rpc-xwbdebug-host-probe` memory.
 - [x] **I2 — `internal/capture`** (TDD green, fake Execer): `Arm/Disarm` (XPAR
   level + read-back confirm), `ReadAll`/`Tailer.ReadNew` (poll + dedup), `Clear`,
   `Level`, marker-based reader parse (newline-encoding tolerant).
-- [x] **I3 — `rpccli`**: `v rpc debug {tail,capture,status,arm,disarm}` with
+- [x] **I3b — `v rpc debug ping`** (TDD `xwbwire` 100%): fires no-arg [XWB] RPCs
+  at a broker (`--addr`) so capture has self-contained traffic — no python/CPRS.
+- [x] **I3 — `rpccli`**: `v rpc debug {tail,capture,status,arm,disarm,ping}` with
   `--all/--filter/--interval/--duration/--level/--keep/--no-clear`, engine flags,
   real `mdriver.Client` adapter; `main.go`. `make check` green (gofmt+lint+race+build).
   **Live `status` proven** through the real driver against vehu (level 1, as-found).
