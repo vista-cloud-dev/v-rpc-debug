@@ -20,14 +20,27 @@ Use it to answer questions like:
 
 - *Is CPRS (or any client) actually reaching the broker, and what is it calling?*
 - *Did my Phase-2 VSL tap capture the same RPCs the broker really saw?* (offline
-  comparison — see [Comparing against the VSL tap](#comparing-against-the-vsl-tap))
+  comparison — see [Comparing against the VSL tap](#7-comparing-against-the-vsl-tap))
 - *Why is this client misbehaving — which RPC fires, in what order?*
 
 > **What it is not.** This is a **debug/validation** tool, not a durable capture
 > pipeline. `XWBDEBUG` logs RPC **names** (not results, not request↔response
-> correlation), it can drop traffic under load (see [Limitations](#limitations)),
+> correlation), it can drop traffic under load (see [Limitations](#8-limitations)),
 > and it has no S3/egress. The durable, complete, egress-capable tap is the VSL
 > broker hook; `v rpc debug` is the zero-install **oracle** you check it against.
+
+## Contents
+
+1. [Prerequisites](#1-prerequisites)
+2. [Selecting the engine](#2-selecting-the-engine)
+3. [Logging into vehu — credentials, user, and the richest patient](#3-logging-into-vehu)
+4. [The commands](#4-the-commands)
+5. [Common flags](#5-common-flags)
+6. [End-to-end run (copy/paste)](#6-end-to-end-run)
+7. [Comparing against the VSL tap](#7-comparing-against-the-vsl-tap)
+8. [Limitations](#8-limitations)
+9. [Troubleshooting](#9-troubleshooting)
+10. [References](#references)
 
 ---
 
@@ -43,20 +56,22 @@ Use it to answer questions like:
   ```
 
 - The target engine up and healthy (e.g. the `vehu` YottaDB-VistA container).
-- The `v-rpc` binary built:
+- The `v-rpc` binary built, and (optionally) on your `PATH`:
 
   ```bash
-  cd ~/vista-cloud-dev/v-rpc && make build      # -> dist/v-rpc
+  cd ~/vista-cloud-dev/v-rpc && make build            # -> dist/v-rpc
+  cp dist/v-rpc ~/scripts/bin/v-rpc                    # ~/scripts/bin is on $PATH
+  # or: ln -s "$PWD/dist/v-rpc" ~/scripts/bin/v-rpc   # symlink to track rebuilds
   ```
 
 Once mounted into the `v` umbrella, every command below is also available as
-`v rpc debug …`. Standalone, it is `v-rpc debug …`.
+`v rpc debug …`. Standalone, it is `v-rpc debug …` (the form used throughout).
 
 ## 2. Selecting the engine
 
 Engine selection is **explicit** — there is no default, on purpose (ydb/vehu has
-data for development; IRIS-VistA is the target for VA validation). Every command
-takes:
+data for development; IRIS-VistA is the target for VA validation). Every engine-side
+command takes:
 
 | Flag | Meaning | Typical value |
 |---|---|---|
@@ -71,7 +86,49 @@ v-rpc debug status --engine ydb --transport docker --container vehu
 (The connection — container, base URL, credentials — is otherwise read by the
 driver from its `M_<ENGINE>_*` environment, exactly like `m vista`.)
 
-## 3. The commands
+## 3. Logging into vehu
+
+To drive real traffic you log a client (CPRS) into VistA. For the `worldvista/vehu`
+demo image these access/verify codes are documented and **confirmed against this
+engine** (access-code hashes resolve to the named `#200` users — see
+[References](#references)):
+
+| User | Access | Verify | Role |
+|---|---|---|---|
+| **PROVIDER,VERO** | `CAS123` | `CAS123..` | **provider — recommended** |
+| VEHU,TEN | `10VEHU` | `QXYG~011` | demo clinician |
+| System Manager | `PRO1234` | `PRO1234!!` | admin / programmer |
+
+E-signature code (to sign orders/notes): `123456`.
+
+**Recommended user type → a clinical *provider*** (e.g. **PROVIDER,VERO** /
+`CAS123`). A provider sees the full chart *and* can place orders, so a session
+exercises the widest set of RPCs (orders, notes, consults, meds, labs, vitals) —
+the richest traffic for tap validation. The System Manager account can browse but
+isn't a clinician, so it fires a narrower set.
+
+At the CPRS sign-on screen type the access code, Tab, then the verify code — or type
+`CAS123;CAS123..` in the Access field. (On these demo images you may be prompted to
+choose a new verify code on first login; just set one.)
+
+### The patient with the most data
+
+Picked from a live read-only probe of vehu (order/note/visit cross-references, see
+[References](#references)). For the **richest, most varied** chart — the best choice
+for exercising the most RPCs across tabs — open:
+
+> **TEN,PATIENT** — **691 notes, 190 visits, 236 orders** (by far the most clinical
+> documents and encounters of any patient). Search `TEN,PATIENT` in CPRS.
+
+Runners-up with broad data: **FORTYSIX,PATIENT** (48 notes / 121 visits / 175
+orders) and **THIRTYSIX,PATIENT** (64 / 68 / 170).
+
+If you specifically want **maximum orders** (and nothing else), **SEVENTYEIGHT,
+OUTPATIENT** has 1,508 orders — but **0 notes and 0 visits** (it's an order-load
+patient), so it lights up far fewer tabs than TEN,PATIENT. For a representative
+full-chart RPC sweep, prefer **TEN,PATIENT**.
+
+## 4. The commands
 
 ### `status` — what's the broker doing?
 
@@ -158,7 +215,9 @@ v-rpc debug clear --engine ydb --container vehu
 # cleared 160 buffered XWBLOG line(s) on ydb
 ```
 
-## 4. Common flags (`tail` and `capture`)
+## 5. Common flags
+
+For `tail` and `capture`:
 
 | Flag | Default | What it does |
 |---|---|---|
@@ -190,32 +249,64 @@ v-rpc debug tail --engine ydb --container vehu -o json | jq -r .rpc
   real VistA is **PHI**, written in cleartext to `^XTMP`. Only use `--level 3` on
   a test system with no real patient data, and clear the log afterward.
 
-## 4a. Self-contained validation (no external client)
+## 6. End-to-end run
 
-Prove capture end-to-end with `v rpc` alone — `tail` in one terminal, `ping` in
-another:
+### A. Self-contained (no CPRS) — ping the live broker, examine, clean up
 
-```bash
-# terminal 1 — watch
-v-rpc debug tail --engine ydb --transport docker --container vehu
-
-# terminal 2 — drive traffic
-v-rpc debug ping --addr 127.0.0.1:9430
-```
-
-Or in a single terminal, bounded, saving to a file — start the capture, then ping
-once it's armed:
+Copy/paste the whole block; it pings vehu's broker, saves the captured RPCs, shows
+them, then leaves the engine pristine (level 1, log cleared):
 
 ```bash
-v-rpc debug capture --engine ydb --transport docker --container vehu \
-  --out rpc.ldjson --duration 8s --all          # arms, captures for 8s, restores
-# ...within those 8 seconds, from another shell:
-v-rpc debug ping --addr 127.0.0.1:9430
-cat rpc.ldjson                                    # the captured RPC: lines, as LDJSON
-v-rpc debug status --engine ydb --transport docker --container vehu  # confirm level back to 1
+export M_YDB_BIN=~/vista-cloud-dev/m-ydb/dist/m-ydb
+ENG="--engine ydb --transport docker --container vehu"
+
+v-rpc debug status $ENG                                   # 1. baseline (level 1, off)
+v-rpc debug arm    $ENG                                   # 2. arm capture (level 2)
+v-rpc debug ping   --addr 127.0.0.1:9430                  # 3. fire real RPCs at the broker
+v-rpc debug capture $ENG --out smoke.ldjson \
+      --no-clear --duration 2s --restore-to 1            # 4. save buffered RPCs -> file, restore to 1
+
+# 5. examine the output
+cat smoke.ldjson
+jq -r '.rpc' smoke.ldjson                                 # just the RPC names
+jq -r '"\(.seq)\t\(.rpc)"' smoke.ldjson                   # seq + name, in order
+jq -s 'group_by(.rpc)|map({rpc:.[0].rpc,n:length})|sort_by(-.n)' smoke.ldjson  # counts
+
+v-rpc debug clear  $ENG                                   # 6. wipe the buffered log
+v-rpc debug status $ENG                                   # 7. confirm: level 1 (off), 0 buffered
 ```
 
-## 5. Comparing against the VSL tap
+### B. Real CPRS — capture a live login + chart sweep
+
+CPRS runs in the VM; `v-rpc` runs on the host. (If CPRS can't reach vehu's
+loopback broker, front it with a relay — see the `vehu-broker-vbox-relay` note;
+CPRS then connects to `10.0.2.2:19431`.)
+
+```bash
+export M_YDB_BIN=~/vista-cloud-dev/m-ydb/dist/m-ydb
+ENG="--engine ydb --transport docker --container vehu"
+
+# 1. start capturing (arms, clears, streams to file). Leave it running.
+v-rpc debug capture $ENG --out cprs-login.ldjson --restore-to 1
+
+#   --- in the VM: launch CPRS, sign in as PROVIDER,VERO (CAS123;CAS123..),
+#       open patient TEN,PATIENT, click through the chart tabs ---
+
+# 2. back on the host: Ctrl-C the capture  (restores XWBDEBUG to 1)
+
+# 3. examine
+wc -l cprs-login.ldjson
+jq -r '"\(.seq)\t\(.rpc)"' cprs-login.ldjson | head -20         # the sign-on sequence
+jq -s 'group_by(.rpc)|map({rpc:.[0].rpc,n:length})|sort_by(-.n)|.[:20]' cprs-login.ldjson
+
+# 4. clean up
+v-rpc debug clear  $ENG
+v-rpc debug status $ENG                                   # level 1 (off), 0 buffered
+```
+
+> Capture files (`*.ldjson`) are git-ignored — they're data, not source.
+
+## 7. Comparing against the VSL tap
 
 The whole point of the LDJSON format is that its field names line up with the
 s3tap envelope (`rpc`, `ts`, `job`, `seq`), so you can join the two captures
@@ -237,7 +328,7 @@ s3tap envelope (`rpc`, `ts`, `job`, `seq`), so you can join the two captures
 The correlation/analysis itself lives in the analysis pipeline, **not** in this
 tool — `v rpc debug` only produces the comparable oracle output.
 
-## 6. Limitations
+## 8. Limitations
 
 - **Names only.** No RPC results, no request↔response correlation, no payloads
   (those need the VSL hook).
@@ -245,12 +336,13 @@ tool — `v rpc debug` only produces the comparable oracle output.
   per broker job, and **wipes it at the start of each new connection**. Since
   process IDs recycle, a connection that begins *and* ends entirely between two
   polls can be overwritten before the tool reads it. Use a short `--interval` for
-  busy systems; for lossless capture use the VSL tap.
+  busy systems; for lossless capture use the VSL tap. (A single, persistent CPRS
+  session is one connection, so its full sequence is captured reliably.)
 - **Self-purging.** Each log auto-expires ~7 days after its connection (Kernel's
   `^XTMP` cleanup) — fine for live use, not an archive.
 - **Second-resolution timestamps** (`$HOROLOG`).
 
-## 7. Troubleshooting
+## 9. Troubleshooting
 
 | Symptom | Likely cause / fix |
 |---|---|
@@ -260,11 +352,20 @@ tool — `v rpc debug` only produces the comparable oracle output.
 | Level didn't restore (still `ON`) | Either a hard-kill (`kill -9`) skipped the restore, or an **overlapping run**: `tail`/`capture` restore to the level they *found* at start, so if one started while another already armed level 2, it leaves it at 2. Fix: `v rpc debug disarm`, or run with `--restore-to 1` to force stock on exit. |
 | Buffered lines won't go away | They auto-purge in ~7 days; to wipe now use `v rpc debug clear` (or start a `tail`/`capture` without `--no-clear`). |
 | Capture file empty | The workload ran outside the capture window, or every connection was wiped between polls — lower `--interval`, or arm first and capture with `--no-clear`. |
+| CPRS can't reach vehu | vehu's broker is published loopback-only; front it with a host relay so the VM can reach it (`vehu-broker-vbox-relay` note). |
 
-## See also
+## References
 
-- `docs/v-rpc-implementation-plan.md` — design + increment tracker.
-- `docs/memory/v-rpc-domain.md` — the locked design and owner follow-ups.
-- The XWBDEBUG mechanics on the engine side: the shared
-  `cprs-rpc-xwbdebug-host-probe` memory and the
-  `cprs-rpc-xwbdebug-smoke-test` proposal in the `docs` repo.
+- **vehu credentials** — [Docker Hub: `worldvista/vehu`](https://hub.docker.com/r/worldvista/vehu)
+  (per-user access/verify table); [WorldVistA/docker-vista README](https://github.com/WorldVistA/docker-vista/blob/master/README.md);
+  [Hardhats — VEHU/CPRS Demo access/verify codes](https://groups.google.com/g/Hardhats/c/ABYd5QyXmTk).
+  Codes were **confirmed against this engine** read-only (`$$EN^XUSHSH` access-code
+  hash → `#200` "A" index).
+- **CPRS sign-in** — [Signing In to CPRS (WorldVistA)](https://code.worldvista.org/files/clients/OSEHRA_VistA/CPRS/1_0_31_118/Help/Signing_In_to_CPRS.htm).
+- **Patient-data figures** — live read-only probe of vehu via the driver seam:
+  orders `^OR(100,"AC",DFN)` (#100), notes `^TIU(8925,"C",DFN)` (#8925), visits
+  `^AUPNVSIT("C",DFN)` (#9000010), names `^DPT(DFN,0)` (#2). 2026-06-26.
+- **Internal** — `docs/v-rpc-implementation-plan.md` (design + tracker);
+  `docs/memory/v-rpc-domain.md` (locked design, follow-ups); the shared
+  `cprs-rpc-xwbdebug-host-probe` memory and `cprs-rpc-xwbdebug-smoke-test`
+  proposal (XWBDEBUG mechanics on the engine side).
