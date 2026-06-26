@@ -12,6 +12,13 @@ work). Correlation of this capture with the S3 tap is done **offline and
 separately**; this tool only produces comparable output (LDJSON whose fields —
 `rpc`, `ts`, `job`, `seq` — align with the s3tap envelope).
 
+## Contents
+
+- [Commands](#commands)
+- [Architecture (waterline-clean)](#architecture-waterline-clean)
+- [Build](#build)
+- [User guide](docs/v-rpc-user-guide.md) · [Implementation plan](docs/v-rpc-implementation-plan.md)
+
 ## Commands
 
 ```
