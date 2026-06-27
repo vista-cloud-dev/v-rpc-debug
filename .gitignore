@@ -3,6 +3,8 @@
 /dist/*
 !/dist/*.json
 /bin/
+# Local root-built binary (symlinked onto PATH: ~/scripts/bin/v-rpc -> ./v-rpc)
+/v-rpc
 *.test
 # coverage report artifacts — specific/anchored so they never match a source
 # file named coverage.go (a broad `coverage.*` silently drops it from commits)
