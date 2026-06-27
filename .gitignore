@@ -15,6 +15,9 @@ coverage.txt
 
 # RPC capture artifacts — data, never source (even at level 2 = names only)
 *.ldjson
+# ...but committed fixtures under testdata/ are tracked reference data (PHI-free,
+# names-only level-2 captures).
+!testdata/*.ldjson
 
 # Editor / OS
 .DS_Store
