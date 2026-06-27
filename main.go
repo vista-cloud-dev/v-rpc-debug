@@ -30,8 +30,9 @@ type CLI struct {
 	clikit.Globals
 	rpccli.Commands
 
-	Schema  clikit.SchemaCmd  `cmd:"" help:"Emit the command/flag/enum tree as JSON (agent discovery)."`
-	Version clikit.VersionCmd `cmd:"" help:"Show version and build info."`
+	Explore clikit.ExploreCmd `cmd:"" group:"Introspect" help:"Browse the command surface interactively (palette)."`
+	Schema  clikit.SchemaCmd  `cmd:"" group:"Introspect" help:"Emit the command/flag/enum tree as JSON (agent discovery)."`
+	Version clikit.VersionCmd `cmd:"" group:"Introspect" help:"Show version and build info."`
 
 	InstallCompletions kongplete.InstallCompletions `cmd:"" help:"Install shell tab-completions."`
 }

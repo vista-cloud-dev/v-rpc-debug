@@ -20,7 +20,7 @@ import (
 
 // Commands is the `v rpc` verb set, embedded by the umbrella and the standalone.
 type Commands struct {
-	Debug debugCmd `cmd:"" help:"Tap the RPC Broker's native XWBDEBUG log: view or save live RPC traffic."`
+	Debug debugCmd `cmd:"" group:"Capture" help:"Tap the RPC Broker's native XWBDEBUG log: view or save live RPC traffic."`
 }
 
 // engineConn selects which engine to drive and over which transport — the same

@@ -265,6 +265,23 @@ v-rpc debug clear --engine ydb --container vehu
 # cleared 160 buffered XWBLOG line(s) on ydb
 ```
 
+### Discovery & introspection (no engine needed)
+
+Three top-level commands describe the tool itself — none of them touch an engine,
+so they work with no driver, container, or Docker. They live under the
+**Introspect** group in `--help`:
+
+```bash
+v-rpc explore          # browse the whole command/flag surface interactively (palette)
+v-rpc schema | jq .    # emit the command/flag/enum tree as JSON (agent/script discovery)
+v-rpc version          # show version and build info
+```
+
+`schema` is the machine-readable contract for the entire CLI (every command, flag,
+default, and enum), handy for scripting or for an agent discovering the surface.
+`explore` is the same surface as a keyboard-driven palette. (`v-rpc
+install-completions` installs shell tab-completion.)
+
 ## 5. Common flags
 
 For `tail` and `capture`:
@@ -282,11 +299,18 @@ For `tail` and `capture`:
 | `--out PATH` | — | (`capture` only, required) output file; `file://PATH` or `PATH` |
 | `--quiet` | off | (`capture` only) don't echo to the terminal |
 
-### Output format
+### Output format & global flags
 
-All commands honor the shared `--output` (`-o`) contract: `text` (human, the
-default on a TTY), `json` (machine), or `auto`. For `tail`, `-o json` streams the
-same LDJSON records `capture` writes — handy for piping into `jq`:
+Every command honors the shared clikit globals:
+
+| Flag | Meaning |
+|---|---|
+| `-o`, `--output {text,json,auto}` | `text` (styled, default on a TTY), `json` (machine-readable), or `auto` |
+| `--no-color` | Disable ANSI styling even on a TTY |
+| `-v`, `--verbose` | Verbose diagnostics to stderr |
+
+For `tail`, `-o json` streams the same LDJSON records `capture` writes — handy for
+piping into `jq`:
 
 ```bash
 v-rpc debug tail --engine ydb --container vehu -o json | jq -r .rpc
