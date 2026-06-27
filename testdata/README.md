@@ -24,6 +24,12 @@ LDJSON schema (one object per line), field names aligned to the s3tap envelope:
 {"source":"xwbdebug","schema_version":1,"kind":"rpc","rpc":"XUS SIGNON SETUP","ts":"67748,39701","job":55760,"seq":6,"msg":"RPC: XUS SIGNON SETUP"}
 ```
 
+**Consumed by** `internal/xwblog/golden_test.go`: every record is round-tripped
+through `ParseRecord → LDJSON` and asserted byte-identical (locking the
+parse/render pipeline + on-disk envelope against drift), plus invariants
+(names-only/PHI-free, schema_version) and the canonical signon prefix. If you
+regenerate this file, update `wantCount` in that test.
+
 Regenerate (host-side, with the relay up — see the user guide §6B):
 
 ```bash
