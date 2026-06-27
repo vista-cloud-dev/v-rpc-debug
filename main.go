@@ -30,7 +30,7 @@ type CLI struct {
 	clikit.Globals
 	rpccli.Commands
 
-	Explore clikit.ExploreCmd `cmd:"" group:"Introspect" help:"Browse the command surface interactively (palette)."`
+	Menu    clikit.MenuCmd    `cmd:"" group:"Introspect" help:"Browse the command surface interactively (palette)."`
 	Schema  clikit.SchemaCmd  `cmd:"" group:"Introspect" help:"Emit the command/flag/enum tree as JSON (agent discovery)."`
 	Version clikit.VersionCmd `cmd:"" group:"Introspect" help:"Show version and build info."`
 

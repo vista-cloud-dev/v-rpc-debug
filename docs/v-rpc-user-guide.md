@@ -272,14 +272,14 @@ so they work with no driver, container, or Docker. They live under the
 **Introspect** group in `--help`:
 
 ```bash
-v-rpc explore          # browse the whole command/flag surface interactively (palette)
+v-rpc menu             # browse the whole command/flag surface interactively (palette)
 v-rpc schema | jq .    # emit the command/flag/enum tree as JSON (agent/script discovery)
 v-rpc version          # show version and build info
 ```
 
 `schema` is the machine-readable contract for the entire CLI (every command, flag,
 default, and enum), handy for scripting or for an agent discovering the surface.
-`explore` is the same surface as a keyboard-driven palette. (`v-rpc
+`menu` is the same surface as a keyboard-driven palette. (`v-rpc
 install-completions` installs shell tab-completion.)
 
 ## 5. Common flags
