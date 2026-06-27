@@ -54,6 +54,20 @@ repo-root build); the hand-made `vehu-broker-relay.service` was retired and repl
 by `v-rpc relay --install` → `v-rpc-relay.service` (enabled, active, linger on).
 `v rpc doctor` reports the path green; CPRS connects `s=10.0.2.2 p=19431`.
 
+**RELAY PROVEN AGAINST REAL CPRS (2026-06-27):** a real CPRS login through the
+built-in relay was verified two ways at once — (1) `ss` showed the relay process
+holding BOTH legs simultaneously: inbound `127.0.0.1:19431 ← 127.0.0.1:<port>` and
+outbound `127.0.0.1:<port> → 127.0.0.1:9430` (→ docker-proxy `172.17.0.1 →
+172.17.0.2:9430` → vehu); (2) a concurrent `v rpc debug capture` caught the
+canonical sign-on (`XUS SIGNON SETUP → XUS AV CODE → XUS GET USER INFO → XWB CREATE
+CONTEXT×4 → ORWU VERSRV …`), 329 RPCs / 144 distinct / 1 connection of a chart
+browse. **GOTCHA — VBox NAT source:** the guest's `10.0.2.2:19431` arrives at the
+relay as a **host-loopback** connection (source `127.0.0.1`, driven by `VBoxSVC`),
+NOT the guest IP — so don't look for a `10.0.2.x`/`172.x` source when confirming.
+**GOTCHA — capture teardown:** `v rpc debug capture`'s `--restore-to`/`Keep`
+cleanup runs on **SIGINT only**; a `TaskStop`/SIGKILL leaves XWBDEBUG armed at 2 —
+follow a hard-stop with an explicit `v rpc debug disarm` + `clear`.
+
 **Open (owner):** confirm the three proposal questions (waterline reading, home of
 the verbs, `--fix` scope). Committed straight to `main` (gate green) per the org
 trunk-based protocol.
