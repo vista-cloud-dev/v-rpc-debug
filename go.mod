@@ -3,7 +3,7 @@ module github.com/vista-cloud-dev/v-rpc
 go 1.26.3
 
 require (
-	github.com/vista-cloud-dev/clikit v0.6.0
+	github.com/vista-cloud-dev/clikit v0.7.0
 	github.com/vista-cloud-dev/m-driver-sdk v0.3.0
 	github.com/willabides/kongplete v0.4.0
 )
