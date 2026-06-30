@@ -9,7 +9,7 @@ metadata:
 VistA-in-Docker broker connection self-diagnosing instead of tribal knowledge.
 Motivated by the recurring `WSAECONNREFUSED / WASConnectByName` failure (every hop
 in the chain dies the same opaque way). Supersedes the manual `socat` relay in
-[[vehu-broker-vbox-relay]]. Proposal: `docs/proposals/v-rpc-network-doctor.md`.
+[[vehu-broker-vbox-relay]]. Proposal (implemented, archived): `docs/archive/v-rpc-network-doctor.md`.
 
 **Root cause (now machine-readable):** vehu publishes the broker bound to
 `127.0.0.1` (`docker inspect` → `HostIp:127.0.0.1`), so a VM can't reach it

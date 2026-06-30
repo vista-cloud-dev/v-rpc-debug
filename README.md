@@ -17,7 +17,7 @@ separately**; this tool only produces comparable output (LDJSON whose fields —
 - [Commands](#commands)
 - [Architecture (waterline-clean)](#architecture-waterline-clean)
 - [Build](#build)
-- [User guide](docs/v-rpc-user-guide.md) · [Implementation plan](docs/v-rpc-implementation-plan.md)
+- [Users guide](docs/v-rpc-debug-users-guide.md) · [Implementation plan (archived)](docs/archive/v-rpc-implementation-plan.md)
 
 ## Commands
 
@@ -43,7 +43,7 @@ v rpc-debug ping     --addr 127.0.0.1:9430            # fire test RPCs so a tap 
 
 The engine flags also read env vars — `export VRPC_ENGINE=ydb VRPC_TRANSPORT=docker
 VRPC_CONTAINER=vehu` (e.g. via direnv) and drop them from the command line. See the
-[user guide](docs/v-rpc-user-guide.md#2-selecting-the-engine).
+[user guide](docs/v-rpc-debug-users-guide.md#2-selecting-the-engine).
 
 Shared flags on `tail`/`capture`: `--all` (every log line, not just `RPC:`),
 `--filter TEXT` (RPC-name substring), `--interval` (poll seconds), `--duration`
@@ -83,12 +83,12 @@ make install BINDIR=~/scripts/bin   # install onto PATH
 directory and `v-rpc-debug` auto-locates it (no `M_<ENGINE>_BIN` needed). Then the only
 config is the container — `export VRPC_CONTAINER=vehu` (engine defaults to `ydb`,
 transport to `docker`) and run flagless: `v-rpc-debug status`. See the
-[user guide §1](docs/v-rpc-user-guide.md#1-setup-one-time).
+[user guide §1](docs/v-rpc-debug-users-guide.md#1-setup-one-time).
 
 Caveat (inherent to XWBDEBUG): `^XTMP("XWBLOG"_$J)` is per-handler and wiped at
 each connection start, so a connection that begins and ends entirely between two
 polls can be missed. Fine for "is traffic flowing" and oracle comparison; the
 lossless, durable tap is the VSL hook.
 
-See `docs/v-rpc-user-guide.md` (full usage) and
-`docs/v-rpc-implementation-plan.md` (design + tracker).
+See `docs/v-rpc-debug-users-guide.md` (full usage) and
+`docs/archive/v-rpc-implementation-plan.md` (design + tracker, archived).
