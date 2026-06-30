@@ -5,9 +5,11 @@ metadata:
   type: project
 ---
 
-**v-rpc-debug created 2026-06-26.** A new repo under vista-cloud-dev: the `v rpc`
-domain, Go, exports importable `rpccli` (the `v` umbrella will mount it as
-`v rpc`, mirroring v-pkg/pkgcli). Layer `v`. Headline capability **`v rpc-debug`**
+**v-rpc-debug created 2026-06-26.** A new repo under vista-cloud-dev: the `v rpc-debug`
+domain, Go, exports importable `rpccli` (the `v` umbrella mounts it as
+`v rpc-debug`, mirroring v-pkg/pkgcli; the `debug` subgroup was later flattened into
+the domain, and the verb renamed `v rpc` → `v rpc-debug` to free `v rpc-tap` for the
+sibling tap domain). Layer `v`. Headline capability **`v rpc-debug`**
 taps the RPC Broker's *native* `XWBDEBUG` log (`^XTMP("XWBLOG"_$J)`) over the m
 engine driver seam to **view live RPC traffic in the terminal** or **save it to a
 file as LDJSON** for **offline comparison against the Phase-2 VSL tap** — a
@@ -75,7 +77,7 @@ clear` wipes the buffered `^XTMP("XWBLOG"*)` on demand (it otherwise auto-purges
    Introspect, `debug` under a Capture group). Tagged **v-rpc-debug v0.1.0**; v-cli now
    has `Rpc rpccli.Commands` (group Domains) + `rpccli.Contract()` in
    `buildRegistry()` (golden `dist/v-registry.json` regenerated). `v rpc <verb>`
-   live on PATH. **GOTCHA:** fetching a fresh private-repo tag needs
+   live on PATH (later flattened + renamed to `v rpc-debug <verb>`). **GOTCHA:** fetching a fresh private-repo tag needs
    `go env -w GOPRIVATE=github.com/vista-cloud-dev` + `gh auth setup-git` — the
    default `proxy.golang.org,direct` can't auth and fails with "could not read
    Username for github.com".

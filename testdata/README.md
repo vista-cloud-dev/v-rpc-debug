@@ -7,8 +7,8 @@ is gitignored repo-wide; files here are the deliberate exception
 ## `cprs-login.ldjson`
 
 A real **CPRS sign-on + chart browse** against the `worldvista/vehu` demo engine,
-captured by `v rpc debug capture` over the m-driver seam **while the session ran
-through the built-in `v rpc relay`** (the relay validation, 2026-06-27).
+captured by `v rpc-debug capture` over the m-driver seam **while the session ran
+through the built-in `v rpc-debug relay`** (the relay validation, 2026-06-27).
 
 - **329 records**, 144 distinct RPCs, 1 broker connection (job `55760`).
 - **XWBDEBUG level 2 → RPC names only. PHI-free**: every record is
